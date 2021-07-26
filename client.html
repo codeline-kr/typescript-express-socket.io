@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js"
+            integrity="sha512-6ORWJX/LrnSjBzwefdNUyLCMTIsGoNP6NftMy2UAm1JBm6PRZCO1d7OHBStWpVFZLO+RerTvqX/Z9mBFfCJZ4A=="
+            crossorigin="anonymous"
+        ></script>
+
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.min.js"
+            integrity="sha512-fB746S+jyTdN2LSWbYSGP2amFYId226wpOeV4ApumcDpIttPxvk1ZPOgnwqwQziRAtZkiFJVx9F64GLAtoIlCQ=="
+            crossorigin="anonymous"
+        ></script>
+
+        <style>
+            #messages {
+                margin-top: 20px;
+            }
+            .message {
+                background-color: chocolate;
+                border-color: #fff;
+                color: #fff;
+                padding: 20px;
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <input type="text" id="message" />
+            <button id="send-btn">전송</button>
+        </div>
+
+        <div id="messages"></div>
+
+        <script>
+            let connected = false;
+            const messages = $('#messages');
+            const message = $('#message');
+            const sendBtn = $('#send-btn');
+            const socket = io('http://127.0.0.1:3000', { transport: ['websocket'] });
+
+            socket.on('connect', () => {
+                connected = true;
+
+                socket.on('disconnect', (_) => {
+                    connected = false;
+                });
+
+                socket.on('message:added', ({ message }) => {
+                    const div = $(`<div class='message'>${message}</div>`);
+
+                    messages.append(div);
+                });
+            });
+
+            $('#message').on('keypress', (e) => {
+                if (e.which == 13) {
+                    sendBtn.trigger('click');
+                }
+            });
+
+            sendBtn.on('click', () => {
+                if (connected) {
+                    socket.emit(
+                        'message:create',
+                        {
+                            message: message.val(),
+                        },
+                        () => {
+                            message.val('');
+                        }
+                    );
+                }
+            });
+        </script>
+    </body>
+</html>
